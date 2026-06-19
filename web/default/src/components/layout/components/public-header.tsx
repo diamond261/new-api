@@ -218,7 +218,9 @@ export function PublicHeader(props: PublicHeaderProps) {
               </Link>
 
               {/* Primary nav links — placed right next to the logo, always visible */}
-              <div className='flex items-center gap-0.5 overflow-x-auto'>
+              <div
+                className='flex items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+              >
                 {links.map((link, i) => {
                   const isActive = pathname === link.href
                   if (link.external) {

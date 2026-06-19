@@ -935,7 +935,14 @@ func DecreaseUserQuota(id int, quota int, db bool) (err error) {
 }
 
 func decreaseUserQuota(id int, quota int) (err error) {
-	err = DB.Model(&User{}).Where("id = ?", id).Update("quota", gorm.Expr("quota - ?", quota)).Error
+	// Atomic clamp to zero — streaming requests can settle with more tokens
+	// than were pre-consumed, so without this an over-budget settlement
+	// would push the user's quota below zero. The CASE expression works
+	// identically on SQLite, MySQL, and PostgreSQL.
+	err = DB.Model(&User{}).Where("id = ?", id).Update(
+		"quota",
+		gorm.Expr("CASE WHEN quota < ? THEN 0 ELSE quota - ? END", quota, quota),
+	).Error
 	if err != nil {
 		return err
 	}

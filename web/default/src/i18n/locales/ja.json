@@ -2760,6 +2760,8 @@
     "No Redemption Codes Found": "引き換えコードが見つかりません",
     "No related models available for this channel type": "このチャネルタイプに関連するモデルが利用できません",
     "No release notes provided.": "リリースノートは提供されていません。",
+    "No releases or tags published yet on the update source.": "更新元にリリースまたはタグがまだ公開されていません。",
+    "A tag `{{tag}}` was found but no release notes have been published yet.": "タグ `{{tag}}` が見つかりましたが、リリースノートはまだ公開されていません。",
     "No Reset": "リセットなし",
     "No restriction": "制限なし",
     "No results for \"{{query}}\". Try adjusting your search or filters.": "\"{{query}}\" の結果が見つかりません。検索条件やフィルターを調整してみてください。",

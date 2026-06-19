@@ -2760,6 +2760,8 @@
     "No Redemption Codes Found": "未找到兑换码",
     "No related models available for this channel type": "此渠道类型没有相关模型可用",
     "No release notes provided.": "未提供发布说明。",
+    "No releases or tags published yet on the update source.": "更新源还没有发布任何 release 或 tag。",
+    "A tag `{{tag}}` was found but no release notes have been published yet.": "找到了 tag `{{tag}}`，但尚未发布 release notes。",
     "No Reset": "不重置",
     "No restriction": "无限制",
     "No results for \"{{query}}\". Try adjusting your search or filters.": "未找到 \"{{query}}\" 的结果。请尝试调整搜索或筛选条件。",

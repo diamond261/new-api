@@ -2760,6 +2760,8 @@
     "No Redemption Codes Found": "Không tìm thấy mã đổi thưởng",
     "No related models available for this channel type": "Không có mô hình liên quan nào cho loại kênh này",
     "No release notes provided.": "Không có ghi chú phát hành nào được cung cấp.",
+    "No releases or tags published yet on the update source.": "Chưa có bản phát hành hoặc thẻ nào được công bố trên nguồn cập nhật.",
+    "A tag `{{tag}}` was found but no release notes have been published yet.": "Đã tìm thấy thẻ `{{tag}}` nhưng chưa có ghi chú phát hành nào được công bố.",
     "No Reset": "Không đặt lại",
     "No restriction": "Không giới hạn",
     "No results for \"{{query}}\". Try adjusting your search or filters.": "Không tìm thấy kết quả cho \"{{query}}\". Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc.",

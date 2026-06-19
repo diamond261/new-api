@@ -48,6 +48,48 @@ import './styles/index.css'
 initializeFrontendCache()
 installBuildMetadata()
 
+// When the backend is redeployed, the hashed JS chunks referenced by the
+// already-loaded index.html no longer exist on the server. Dynamic imports
+// then reject with ChunkLoadError / "Failed to fetch dynamically imported
+// module", and the React router renders nothing — a white screen.
+// Reload once on such errors so the user picks up the new assets. The
+// sessionStorage guard prevents an infinite reload loop if the failure
+// persists for some other reason (e.g. backend actually down).
+if (typeof window !== 'undefined') {
+  const RELOAD_GUARD_KEY = 'chunk-error-reload-at'
+  const RELOAD_COOLDOWN_MS = 30_000
+  const looksLikeChunkLoadError = (reason: unknown): boolean => {
+    if (!reason) return false
+    const name = (reason as { name?: string }).name ?? ''
+    const message =
+      (reason as { message?: string }).message ??
+      String(reason as unknown as string)
+    return (
+      name === 'ChunkLoadError' ||
+      /Loading chunk [\w-]+ failed/i.test(message) ||
+      /Failed to fetch dynamically imported module/i.test(message) ||
+      /Importing a module script failed/i.test(message)
+    )
+  }
+  const reloadOnce = () => {
+    try {
+      const last = Number(sessionStorage.getItem(RELOAD_GUARD_KEY) || 0)
+      if (last && Date.now() - last < RELOAD_COOLDOWN_MS) return
+      sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()))
+    } catch {
+      /* sessionStorage may be unavailable in private mode */
+    }
+    window.location.reload()
+  }
+  window.addEventListener('vite:preloadError', reloadOnce as EventListener)
+  window.addEventListener('unhandledrejection', (event) => {
+    if (looksLikeChunkLoadError(event.reason)) reloadOnce()
+  })
+  window.addEventListener('error', (event) => {
+    if (looksLikeChunkLoadError(event.error)) reloadOnce()
+  })
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

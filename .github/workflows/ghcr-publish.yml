@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write
 
@@ -102,3 +102,23 @@ jobs:
             echo "version: ${{ steps.version.outputs.version }}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Publish a GitHub Release for every v*.*.* tag so the dashboard's
+      # "Check for updates" button (which hits /releases/latest) actually
+      # finds something. Skipped for plain main pushes.
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-rc') || contains(steps.version.outputs.version, '-beta') || contains(steps.version.outputs.version, '-alpha') }}
+          body: |
+            Docker image: `ghcr.io/diamond261/new-api:${{ steps.version.outputs.version }}`
+
+            Pulled with:
+            ```
+            docker pull ghcr.io/diamond261/new-api:${{ steps.version.outputs.version }}
+            ```

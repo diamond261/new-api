@@ -66,11 +66,11 @@ export async function backupDatabase() {
 }
 
 export async function restoreDatabase(file: File) {
+  // Let axios derive the multipart boundary automatically — overriding the
+  // Content-Type header here would strip the boundary and break parsing.
   const formData = new FormData()
   formData.append('file', file)
-  const res = await api.post('/api/database/restore', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const res = await api.post('/api/database/restore', formData)
   return res.data as {
     success: boolean
     message?: string

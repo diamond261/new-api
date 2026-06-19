@@ -54,21 +54,60 @@ export function UpdateCheckerSection({
   const handleCheckUpdates = async () => {
     setChecking(true)
     try {
-      const response = await fetch(
+      const headers = {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'new-api-dashboard',
+      } as const
+
+      let releaseResponse = await fetch(
         'https://api.github.com/repos/diamond261/new-api/releases/latest',
-        {
-          headers: {
-            Accept: 'application/vnd.github+json',
-            'User-Agent': 'new-api-dashboard',
-          },
-        }
+        { headers }
       )
 
-      if (!response.ok) {
+      // GitHub returns 404 when the repo has no published releases yet —
+      // fall back to the latest pushed tag so the button still works.
+      if (releaseResponse.status === 404) {
+        const tagsResponse = await fetch(
+          'https://api.github.com/repos/diamond261/new-api/tags?per_page=1',
+          { headers }
+        )
+        if (tagsResponse.ok) {
+          const tags = (await tagsResponse.json()) as Array<{ name?: string }>
+          if (tags.length === 0) {
+            toast.info(
+              t('No releases or tags published yet on the update source.')
+            )
+            return
+          }
+          const tagName = tags[0]?.name
+          if (tagName && (!currentVersion || tagName !== currentVersion)) {
+            setRelease({
+              tag_name: tagName,
+              name: tagName,
+              html_url: `https://github.com/diamond261/new-api/releases/tag/${tagName}`,
+              body: t(
+                'A tag `{{tag}}` was found but no release notes have been published yet.',
+                { tag: tagName }
+              ),
+            })
+            setDialogOpen(true)
+            return
+          }
+          toast.success(
+            t('You are running the latest version ({{version}}).', {
+              version: tagName ?? '',
+            })
+          )
+          return
+        }
+        releaseResponse = tagsResponse
+      }
+
+      if (!releaseResponse.ok) {
         throw new Error(t('Failed to contact GitHub releases API'))
       }
 
-      const data = (await response.json()) as ReleaseInfo
+      const data = (await releaseResponse.json()) as ReleaseInfo
       if (!data?.tag_name) {
         throw new Error(t('Unexpected release payload'))
       }
