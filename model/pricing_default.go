@@ -4,37 +4,44 @@ import (
 	"strings"
 )
 
-// 简化的供应商映射规则
-var defaultVendorRules = map[string]string{
-	"gpt":      "OpenAI",
-	"dall-e":   "OpenAI",
-	"whisper":  "OpenAI",
-	"o1":       "OpenAI",
-	"o3":       "OpenAI",
-	"claude":   "Anthropic",
-	"gemini":   "Google",
-	"moonshot": "Moonshot",
-	"kimi":     "Moonshot",
-	"chatglm":  "智谱",
-	"glm-":     "智谱",
-	"qwen":     "阿里巴巴",
-	"deepseek": "DeepSeek",
-	"abab":     "MiniMax",
-	"ernie":    "百度",
-	"spark":    "讯飞",
-	"hunyuan":  "腾讯",
-	"command":  "Cohere",
-	"@cf/":     "Cloudflare",
-	"360":      "360",
-	"yi":       "零一万物",
-	"jina":     "Jina",
-	"mistral":  "Mistral",
-	"grok":     "xAI",
-	"llama":    "Meta",
-	"doubao":   "字节跳动",
-	"kling":    "快手",
-	"jimeng":   "即梦",
-	"vidu":     "Vidu",
+// vendorRule 供应商匹配规则。使用有序切片而非 map，确保匹配顺序稳定
+// （map 遍历顺序随机，会导致同一模型名被随机归类到不同供应商）。
+type vendorRule struct {
+	pattern string
+	vendor  string
+}
+
+// 简化的供应商映射规则（按优先级排序，靠前的规则优先匹配）。
+var defaultVendorRules = []vendorRule{
+	{"gpt", "OpenAI"},
+	{"dall-e", "OpenAI"},
+	{"whisper", "OpenAI"},
+	{"o1", "OpenAI"},
+	{"o3", "OpenAI"},
+	{"claude", "Anthropic"},
+	{"gemini", "Google"},
+	{"moonshot", "Moonshot"},
+	{"kimi", "Moonshot"},
+	{"chatglm", "智谱"},
+	{"glm-", "智谱"},
+	{"qwen", "阿里巴巴"},
+	{"deepseek", "DeepSeek"},
+	{"abab", "MiniMax"},
+	{"ernie", "百度"},
+	{"spark", "讯飞"},
+	{"hunyuan", "腾讯"},
+	{"command", "Cohere"},
+	{"@cf/", "Cloudflare"},
+	{"360", "360"},
+	{"yi", "零一万物"},
+	{"jina", "Jina"},
+	{"mistral", "Mistral"},
+	{"grok", "xAI"},
+	{"llama", "Meta"},
+	{"doubao", "字节跳动"},
+	{"kling", "快手"},
+	{"jimeng", "即梦"},
+	{"vidu", "Vidu"},
 }
 
 // 供应商默认图标映射
@@ -75,14 +82,27 @@ func initDefaultVendorMapping(metaMap map[string]*Model, vendorMap map[int]*Vend
 			continue
 		}
 
-		// 匹配供应商
+		// 匹配供应商：先按前缀匹配（更可靠，避免 "gpt-5.3-spark" 因含 "spark"
+		// 子串被误判为讯飞），未命中再按子串匹配兜底。规则按定义顺序评估，结果稳定。
 		vendorID := 0
 		modelLower := strings.ToLower(modelName)
-		for pattern, vendorName := range defaultVendorRules {
-			if strings.Contains(modelLower, pattern) {
-				vendorID = getOrCreateVendor(vendorName, vendorMap)
+		matchedVendor := ""
+		for _, rule := range defaultVendorRules {
+			if strings.HasPrefix(modelLower, rule.pattern) {
+				matchedVendor = rule.vendor
 				break
 			}
+		}
+		if matchedVendor == "" {
+			for _, rule := range defaultVendorRules {
+				if strings.Contains(modelLower, rule.pattern) {
+					matchedVendor = rule.vendor
+					break
+				}
+			}
+		}
+		if matchedVendor != "" {
+			vendorID = getOrCreateVendor(matchedVendor, vendorMap)
 		}
 
 		// 创建模型元数据

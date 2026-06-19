@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -44,7 +44,12 @@ import {
 } from '@/components/ui/form'
 import { Switch } from '@/components/ui/switch'
 import { DateTimePicker } from '@/components/datetime-picker'
-import { deleteLogsBefore } from '../api'
+import {
+  deleteAllLogs,
+  backupDatabase,
+  deleteLogsBefore,
+  restoreDatabase,
+} from '../api'
 import {
   SettingsControlGroup,
   SettingsForm,
@@ -107,6 +112,14 @@ export function LogSettingsSection({
   )
   const [isCleaning, setIsCleaning] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [isDeletingAll, setIsDeletingAll] = useState(false)
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false)
+  const [isBackingUp, setIsBackingUp] = useState(false)
+  const [showBackupDialog, setShowBackupDialog] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false)
+  const [restoreFile, setRestoreFile] = useState<File | null>(null)
+  const restoreInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     form.reset({ LogConsumeEnabled: defaultEnabled })
@@ -163,6 +176,100 @@ export function LogSettingsSection({
       toast.error(message)
     } finally {
       setIsCleaning(false)
+    }
+  }
+
+  const handleDeleteAllLogs = async () => {
+    setIsDeletingAll(true)
+    try {
+      const res = await deleteAllLogs()
+      if (!res.success) {
+        throw new Error(res.message || t('Failed to delete logs'))
+      }
+      toast.success(t('All logs deleted successfully'))
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t('Failed to delete logs')
+      toast.error(message)
+    } finally {
+      setIsDeletingAll(false)
+      setShowDeleteAllDialog(false)
+    }
+  }
+
+  const handleBackupDatabase = async () => {
+    setIsBackingUp(true)
+    try {
+      const res = await backupDatabase()
+      const blob = res.data as Blob
+      const disposition = (res.headers?.['content-disposition'] ?? '') as string
+      const match = disposition.match(/filename="?([^"]+)"?/i)
+      const filename = match?.[1] ?? `new-api-backup-${Date.now()}.db`
+
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+
+      toast.success(t('Database backup downloaded successfully'))
+    } catch (error) {
+      let message = t('Failed to backup database')
+      if (error && typeof error === 'object' && 'response' in error) {
+        // The axios error carries a Blob body when responseType is 'blob' —
+        // try to read it as JSON so the backend "not supported" message is
+        // surfaced to the user instead of a generic failure.
+        const response = (error as { response?: { data?: unknown } }).response
+        const data = response?.data
+        if (data instanceof Blob) {
+          try {
+            const text = await data.text()
+            const parsed = JSON.parse(text)
+            if (parsed?.message) message = parsed.message
+          } catch {
+            // ignore — fall back to the default message
+          }
+        } else if (data && typeof data === 'object' && 'message' in data) {
+          message = (data as { message: string }).message
+        }
+      } else if (error instanceof Error) {
+        message = error.message
+      }
+      toast.error(message)
+    } finally {
+      setIsBackingUp(false)
+      setShowBackupDialog(false)
+    }
+  }
+
+  const handleRestoreDatabase = async () => {
+    if (!restoreFile) {
+      toast.error(t('Please choose a backup file (.db) to restore.'))
+      return
+    }
+    setIsRestoring(true)
+    try {
+      const res = await restoreDatabase(restoreFile)
+      if (!res.success) {
+        throw new Error(res.message || t('Failed to restore database'))
+      }
+      toast.success(
+        t(
+          'Database restored. The server will restart in a few seconds — refresh the page after it comes back.'
+        )
+      )
+      setRestoreFile(null)
+      if (restoreInputRef.current) restoreInputRef.current.value = ''
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : t('Failed to restore database')
+      toast.error(message)
+    } finally {
+      setIsRestoring(false)
+      setShowRestoreDialog(false)
     }
   }
 
@@ -230,6 +337,56 @@ export function LogSettingsSection({
               </Button>
             </div>
           </SettingsControlGroup>
+
+          <SettingsControlGroup className='space-y-3'>
+            <div>
+              <h4 className='text-destructive text-sm font-medium'>
+                {t('Dangerous Operations')}
+              </h4>
+              <p className='text-muted-foreground text-sm'>
+                {t(
+                  'Irreversible actions — make sure you have a backup before proceeding.'
+                )}
+              </p>
+            </div>
+            <div className='flex flex-wrap gap-3'>
+              <Button
+                type='button'
+                variant='destructive'
+                onClick={() => setShowDeleteAllDialog(true)}
+                disabled={isDeletingAll}
+              >
+                {isDeletingAll ? t('Cleaning...') : t('Delete All Logs')}
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setShowBackupDialog(true)}
+                disabled={isBackingUp}
+              >
+                {isBackingUp ? t('Loading...') : t('Backup Database')}
+              </Button>
+              <input
+                ref={restoreInputRef}
+                type='file'
+                accept='.db,application/octet-stream'
+                className='hidden'
+                onChange={(event) => {
+                  const file = event.target.files?.[0] ?? null
+                  setRestoreFile(file)
+                  if (file) setShowRestoreDialog(true)
+                }}
+              />
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => restoreInputRef.current?.click()}
+                disabled={isRestoring}
+              >
+                {isRestoring ? t('Loading...') : t('Restore Database')}
+              </Button>
+            </div>
+          </SettingsControlGroup>
         </SettingsForm>
       </Form>
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -254,6 +411,99 @@ export function LogSettingsSection({
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleCleanLogs} disabled={isCleaning}>
               {isCleaning ? t('Cleaning...') : t('Delete logs')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showDeleteAllDialog}
+        onOpenChange={setShowDeleteAllDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Delete All Logs')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'Are you sure you want to delete all logs? This action cannot be undone.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>
+              {t('Cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllLogs}
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? t('Cleaning...') : t('Delete All Logs')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showBackupDialog} onOpenChange={setShowBackupDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Backup Database')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'Are you sure you want to backup the database? This may take a moment.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBackingUp}>
+              {t('Cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBackupDatabase}
+              disabled={isBackingUp}
+            >
+              {isBackingUp ? t('Loading...') : t('Backup Database')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showRestoreDialog}
+        onOpenChange={(open) => {
+          setShowRestoreDialog(open)
+          if (!open && !isRestoring) {
+            setRestoreFile(null)
+            if (restoreInputRef.current) restoreInputRef.current.value = ''
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Restore Database')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'Restoring will overwrite ALL current data with the uploaded backup. A safety copy of the current database will be kept on disk. The server will restart automatically after the restore completes.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {restoreFile && (
+            <div className='bg-muted/40 text-foreground/80 rounded-md px-3 py-2 text-xs'>
+              <span className='font-mono'>{restoreFile.name}</span>
+              <span className='text-muted-foreground'>
+                {' '}
+                ({(restoreFile.size / 1024).toFixed(1)} KB)
+              </span>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRestoring}>
+              {t('Cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRestoreDatabase}
+              disabled={isRestoring || !restoreFile}
+            >
+              {isRestoring ? t('Loading...') : t('Restore Database')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

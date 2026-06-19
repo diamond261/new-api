@@ -17,8 +17,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, BookOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useStatus } from '@/hooks/use-status'
 import { Button } from '@/components/ui/button'
 import { AnimateInView } from '@/components/animate-in-view'
 
@@ -29,9 +30,40 @@ interface CTAProps {
 
 export function CTA(props: CTAProps) {
   const { t } = useTranslation()
+  const { status } = useStatus()
+  const docsUrl =
+    (status?.docs_link as string | undefined) || 'https://docs.newapi.pro'
 
   if (props.isAuthenticated) {
     return null
+  }
+
+  const renderDocsButton = () => {
+    const isExternal = docsUrl.startsWith('http')
+    if (isExternal) {
+      return (
+        <Button
+          variant='outline'
+          className='border-border/50 hover:border-border hover:bg-muted/50 group inline-flex items-center gap-1.5 rounded-lg'
+          render={
+            <a href={docsUrl} target='_blank' rel='noopener noreferrer' />
+          }
+        >
+          <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
+          {t('Docs')}
+        </Button>
+      )
+    }
+    return (
+      <Button
+        variant='outline'
+        className='border-border/50 hover:border-border hover:bg-muted/50 group inline-flex items-center gap-1.5 rounded-lg'
+        render={<Link to={docsUrl} />}
+      >
+        <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
+        {t('Docs')}
+      </Button>
+    )
   }
 
   return (
@@ -48,34 +80,39 @@ export function CTA(props: CTAProps) {
         }}
       />
 
+      {/* "// Ready to Go?" divider */}
+      <div className='mb-10 flex items-center justify-center gap-4'>
+        <span
+          aria-hidden
+          className='border-border/60 h-px max-w-[200px] flex-1 border-t'
+        />
+        <span className='font-mono text-sm font-medium tracking-wider text-blue-600 whitespace-nowrap dark:text-blue-400'>
+          {t('// Ready to Go?')}
+        </span>
+        <span
+          aria-hidden
+          className='border-border/60 h-px max-w-[200px] flex-1 border-t'
+        />
+      </div>
+
       <AnimateInView
         className='mx-auto max-w-2xl text-center'
         animation='scale-in'
       >
         <h2 className='text-2xl leading-tight font-bold tracking-tight md:text-4xl'>
-          {t('Ready to simplify')}
-          <br />
           <span className='bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent'>
-            {t('your AI integration?')}
+            {t('Ready to set sail with Model Bay?')}
           </span>
         </h2>
         <p className='text-muted-foreground/80 mx-auto mt-5 max-w-md text-sm leading-relaxed md:text-base'>
-          {t(
-            'Deploy your own gateway and start routing requests through your configured upstream services.'
-          )}
+          {t('Set your API Key and let your dream stop being just an idea.')}
         </p>
         <div className='mt-8 flex items-center justify-center gap-3'>
           <Button className='group rounded-lg' render={<Link to='/sign-up' />}>
             {t('Get Started')}
             <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
           </Button>
-          <Button
-            variant='outline'
-            className='border-border/50 hover:border-border hover:bg-muted/50 rounded-lg'
-            render={<Link to='/pricing' />}
-          >
-            {t('View Pricing')}
-          </Button>
+          {renderDocsButton()}
         </div>
       </AnimateInView>
     </section>

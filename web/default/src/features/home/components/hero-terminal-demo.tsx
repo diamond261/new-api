@@ -16,222 +16,237 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
-type AccentTone = 'emerald' | 'amber' | 'blue' | 'violet'
+// Gateway base URL + key shown in the demo. Change these to match your deployment.
+const GATEWAY_URL = 'https://model-bay.com'
+const API_KEY = 'modelbay'
 
-interface ApiDemoConfig {
+type LineKind = 'command' | 'success' | 'pending'
+
+interface TermLine {
+  kind: LineKind
+  text: string
+}
+
+interface CliDemo {
   id: string
   label: string
-  method: 'POST' | 'GET'
-  endpoint: string
-  headers: string[]
-  request: string[]
-  response: string[]
-  responseHighlights: string[]
-  tokens: number
-  latency: number
-  accent: AccentTone
+  /** Tailwind classes for the active tab. */
+  activeTab: string
+  lines: TermLine[]
 }
 
-const ACCENT_CLASSES: Record<
-  AccentTone,
-  {
-    activeText: string
-    activeBorder: string
-    badge: string
-  }
-> = {
-  emerald: {
-    activeText: 'text-emerald-600 dark:text-emerald-400',
-    activeBorder: 'border-emerald-500 dark:border-emerald-400',
-    badge:
-      'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400',
-  },
-  amber: {
-    activeText: 'text-amber-600 dark:text-amber-400',
-    activeBorder: 'border-amber-500 dark:border-amber-400',
-    badge:
-      'bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400',
-  },
-  blue: {
-    activeText: 'text-blue-600 dark:text-blue-400',
-    activeBorder: 'border-blue-500 dark:border-blue-400',
-    badge:
-      'bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-400',
-  },
-  violet: {
-    activeText: 'text-violet-600 dark:text-violet-400',
-    activeBorder: 'border-violet-500 dark:border-violet-400',
-    badge:
-      'bg-violet-500/10 text-violet-600 dark:bg-violet-400/10 dark:text-violet-400',
-  },
+function buildClis(t: (key: string) => string): CliDemo[] {
+  return [
+    {
+      id: 'claude',
+      label: 'Claude Code',
+      activeTab: 'border-orange-400 text-orange-500 dark:text-orange-400',
+      lines: [
+        { kind: 'command', text: 'npm i -g @anthropic-ai/claude-code' },
+        { kind: 'success', text: 'installed claude-code@latest' },
+        { kind: 'command', text: `export ANTHROPIC_BASE_URL="${GATEWAY_URL}"` },
+        { kind: 'command', text: `export ANTHROPIC_AUTH_TOKEN="${API_KEY}"` },
+        {
+          kind: 'command',
+          text: `claude "${t('Refactor this component and add unit tests')}"`,
+        },
+        { kind: 'pending', text: 'planning edits · 1.2s' },
+        { kind: 'success', text: '4 files changed · tests passing' },
+      ],
+    },
+    {
+      id: 'codex',
+      label: 'Codex CLI',
+      activeTab: 'border-emerald-400 text-emerald-600 dark:text-emerald-400',
+      lines: [
+        { kind: 'command', text: 'npm i -g @openai/codex' },
+        { kind: 'success', text: 'installed codex@latest' },
+        { kind: 'command', text: `export OPENAI_BASE_URL="${GATEWAY_URL}"` },
+        { kind: 'command', text: `export OPENAI_API_KEY="${API_KEY}"` },
+        {
+          kind: 'command',
+          text: `codex "${t('Fix the concurrency issue in the login flow')}"`,
+        },
+        { kind: 'pending', text: 'reasoning · 0.9s' },
+        { kind: 'success', text: 'patch applied · 2 tests added' },
+      ],
+    },
+    {
+      id: 'gemini',
+      label: 'Gemini CLI',
+      activeTab: 'border-sky-400 text-sky-600 dark:text-sky-400',
+      lines: [
+        { kind: 'command', text: 'npm i -g @google/gemini-cli' },
+        { kind: 'success', text: 'installed gemini-cli@latest' },
+        {
+          kind: 'command',
+          text: `export GOOGLE_GEMINI_BASE_URL="${GATEWAY_URL}"`,
+        },
+        { kind: 'command', text: `export GEMINI_API_KEY="${API_KEY}"` },
+        {
+          kind: 'command',
+          text: `gemini "${t('Explain the execution plan of this SQL')}"`,
+        },
+        { kind: 'pending', text: 'analysing query · 0.8s' },
+        { kind: 'success', text: '3 hot paths identified · index suggested' },
+      ],
+    },
+  ]
 }
-
-const API_DEMOS: ApiDemoConfig[] = [
-  {
-    id: 'gpt-chat',
-    label: 'Chat',
-    method: 'POST',
-    endpoint: '/v1/chat/completions',
-    headers: ['"Authorization: Bearer sk-••••"'],
-    request: [
-      '"model": "your-model",',
-      '"messages": [',
-      '  { "role": "user", "content": "..." }',
-      ']',
-    ],
-    response: [
-      '{',
-      '  "choices": [{ "message": { "content": <text> } }],',
-      '  "usage": { "total_tokens": <tokens> }',
-      '}',
-    ],
-    responseHighlights: ['<text>', '<tokens>'],
-    tokens: 27,
-    latency: 142,
-    accent: 'emerald',
-  },
-  {
-    id: 'responses',
-    label: 'Responses',
-    method: 'POST',
-    endpoint: '/v1/responses',
-    headers: ['"Authorization: Bearer sk-••••"'],
-    request: ['"model": "your-model",', '"input": "..."'],
-    response: [
-      '{',
-      '  "output": [{ "type": "output_text", "text": <text> }],',
-      '  "usage": { "total_tokens": <tokens> }',
-      '}',
-    ],
-    responseHighlights: ['<text>', '<tokens>'],
-    tokens: 31,
-    latency: 168,
-    accent: 'amber',
-  },
-  {
-    id: 'claude',
-    label: 'Claude',
-    method: 'POST',
-    endpoint: '/v1/messages',
-    headers: ['"x-api-key: sk-••••"', '"anthropic-version: 2023-06-01"'],
-    request: [
-      '"model": "your-model",',
-      '"max_tokens": 1024,',
-      '"messages": [',
-      '  { "role": "user", "content": "..." }',
-      ']',
-    ],
-    response: [
-      '{',
-      '  "content": [{ "type": "text", "text": <text> }],',
-      '  "usage": { "input_tokens": <in>, "output_tokens": <out> }',
-      '}',
-    ],
-    responseHighlights: ['<text>', '<in>', '<out>'],
-    tokens: 29,
-    latency: 156,
-    accent: 'blue',
-  },
-  {
-    id: 'gemini',
-    label: 'Gemini',
-    method: 'POST',
-    endpoint: '/v1beta/models/{model}:generateContent',
-    headers: ['"x-goog-api-key: sk-••••"'],
-    request: [
-      '"contents": [',
-      '  { "role": "user",',
-      '    "parts": [{ "text": "..." }] }',
-      ']',
-    ],
-    response: [
-      '{',
-      '  "candidates": [{ "content": { "parts": [{ "text": <text> }] } }],',
-      '  "usageMetadata": { "totalTokenCount": <tokens> }',
-      '}',
-    ],
-    responseHighlights: ['<text>', '<tokens>'],
-    tokens: 25,
-    latency: 93,
-    accent: 'violet',
-  },
-]
-
-const CYCLE_INTERVAL = 4500
-const TRANSITION_MS = 220
 
 interface HeroTerminalDemoProps {
   className?: string
 }
 
 export function HeroTerminalDemo(props: HeroTerminalDemoProps) {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [transitioning, setTransitioning] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const { t, i18n } = useTranslation()
+  const clis = useMemo(() => buildClis(t), [t, i18n.language])
+
+  const [tab, setTab] = useState(0)
+  const [lineIdx, setLineIdx] = useState(0)
+  const [charIdx, setCharIdx] = useState(0)
+  const [done, setDone] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  const cli = clis[tab]
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (mq.matches) return
+    const reduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+    const lines = clis[tab].lines
+    let cancelled = false
 
-    intervalRef.current = setInterval(() => {
-      setTransitioning(true)
-      timeoutRef.current = setTimeout(() => {
-        setActiveIndex((prev) => (prev + 1) % API_DEMOS.length)
-        setTransitioning(false)
-      }, TRANSITION_MS)
-    }, CYCLE_INTERVAL)
+    setLineIdx(0)
+    setCharIdx(0)
+    setDone(false)
+
+    const schedule = (fn: () => void, ms: number) => {
+      timerRef.current = setTimeout(() => {
+        if (!cancelled) fn()
+      }, ms)
+    }
+
+    if (reduced) {
+      setLineIdx(lines.length)
+      setDone(true)
+      // Reduced motion: render the full session, no animation, no looping.
+      return () => {
+        cancelled = true
+        if (timerRef.current) clearTimeout(timerRef.current)
+      }
+    }
+
+    let li = 0
+    let ci = 0
+
+    const step = () => {
+      const line = lines[li]
+      if (!line) {
+        // Finished — stop here (no auto-advance to the next CLI).
+        setDone(true)
+        setLineIdx(lines.length)
+        return
+      }
+      if (line.kind === 'command' && ci < line.text.length) {
+        ci += 1
+        setLineIdx(li)
+        setCharIdx(ci)
+        schedule(step, 18 + Math.random() * 34)
+        return
+      }
+      // Line fully revealed — hold briefly, then advance.
+      setLineIdx(li)
+      setCharIdx(line.text.length)
+      const pause =
+        line.kind === 'pending' ? 880 : line.kind === 'command' ? 360 : 280
+      schedule(() => {
+        li += 1
+        ci = 0
+        step()
+      }, pause)
+    }
+
+    schedule(step, 380)
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      cancelled = true
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [])
+  }, [tab, clis])
 
-  const handleSelect = (index: number) => {
-    if (index === activeIndex) return
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    setTransitioning(true)
-    timeoutRef.current = setTimeout(() => {
-      setActiveIndex(index)
-      setTransitioning(false)
-    }, TRANSITION_MS)
+  const lines = cli.lines
+  const visible: ReactNode[] = []
+  const lastIndex = Math.min(lineIdx, lines.length - 1)
+  for (let i = 0; i <= lastIndex; i++) {
+    const line = lines[i]
+    const isCurrent = i === lineIdx && !done
+    const isTypingCommand = isCurrent && line.kind === 'command'
+    const text = isTypingCommand ? line.text.slice(0, charIdx) : line.text
+    visible.push(
+      <TerminalLine
+        key={i}
+        kind={line.kind}
+        text={text}
+        showCursor={isTypingCommand}
+      />
+    )
   }
-
-  const demo = API_DEMOS[activeIndex]
-  const accent = ACCENT_CLASSES[demo.accent]
 
   return (
     <div className={cn('mx-auto w-full max-w-2xl', props.className)}>
       <div
         className={cn(
-          'overflow-hidden rounded-2xl border backdrop-blur-sm',
-          'border-border/60 bg-white/95 shadow-[0_20px_50px_-25px_rgba(15,23,42,0.18)]',
-          'dark:border-white/[0.06] dark:bg-[#0b0f17]/95 dark:shadow-[0_20px_60px_-25px_rgba(0,0,0,0.7)]'
+          'overflow-hidden rounded-2xl border-2 backdrop-blur-sm',
+          'border-border bg-white/95 shadow-[0_20px_50px_-25px_rgba(15,23,42,0.18)] ring-1 ring-black/5',
+          'dark:border-white/15 dark:bg-[#0b0f17]/95 dark:shadow-[0_20px_60px_-25px_rgba(0,0,0,0.7)] dark:ring-white/5'
         )}
       >
-        {/* Tab strip */}
+        {/* Title bar with traffic lights */}
+        <div
+          className={cn(
+            'flex items-center gap-2 border-b px-4 py-2.5',
+            'border-border/50 dark:border-white/[0.05]'
+          )}
+        >
+          <div className='flex items-center gap-1.5'>
+            <span className='size-3 rounded-full bg-[#ff5f57]' />
+            <span className='size-3 rounded-full bg-[#febc2e]' />
+            <span className='size-3 rounded-full bg-[#28c840]' />
+          </div>
+          <span className='text-foreground/40 mx-auto font-mono text-[11px] tracking-wide'>
+            {cli.label.toLowerCase().replace(/\s+/g, '-')} — zsh
+          </span>
+          <div className='flex items-center gap-2'>
+            <span className='inline-block size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.45)]' />
+            <span className='text-foreground/40 font-mono text-[10px] tracking-wider uppercase'>
+              live
+            </span>
+          </div>
+        </div>
+
+        {/* CLI tab strip */}
         <div
           className={cn(
             'flex items-center gap-1 border-b px-2 sm:gap-1.5 sm:px-3',
             'border-border/50 dark:border-white/[0.05]'
           )}
         >
-          {API_DEMOS.map((item, index) => {
-            const tone = ACCENT_CLASSES[item.accent]
-            const isActive = index === activeIndex
+          {clis.map((item, index) => {
+            const isActive = index === tab
             return (
               <button
                 key={item.id}
-                onClick={() => handleSelect(index)}
+                type='button'
+                onClick={() => setTab(index)}
                 className={cn(
                   'relative -mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-[11px] font-medium tracking-wide transition-colors sm:px-3 sm:text-xs',
                   isActive
-                    ? `${tone.activeBorder} ${tone.activeText}`
+                    ? item.activeTab
                     : 'text-foreground/40 hover:text-foreground/70 border-transparent'
                 )}
               >
@@ -239,75 +254,28 @@ export function HeroTerminalDemo(props: HeroTerminalDemoProps) {
               </button>
             )
           })}
-          <div className='ml-auto flex items-center gap-2 pr-2 sm:pr-3'>
-            <span className='inline-block size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.45)]' />
-            <span className='text-foreground/40 font-mono text-[10px] tracking-wider uppercase'>
-              200 ok
-            </span>
+        </div>
+
+        {/* Terminal body — fixed height so it never reflows */}
+        <div className='h-[360px] overflow-hidden px-5 py-4 font-mono text-[12.5px] leading-[1.7]'>
+          <div className='flex flex-col'>
+            {visible}
+            {done && <PromptCursor />}
           </div>
         </div>
 
-        {/* Endpoint row */}
-        <div
-          className={cn(
-            'flex items-center gap-2.5 border-b px-5 py-3',
-            'border-border/40 dark:border-white/[0.04]'
-          )}
-        >
-          <span
-            className={cn(
-              'rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider',
-              accent.badge
-            )}
-          >
-            {demo.method}
-          </span>
-          <code
-            className={cn(
-              'text-foreground/75 truncate font-mono text-[12.5px] transition-opacity duration-200',
-              transitioning ? 'opacity-0' : 'opacity-100'
-            )}
-          >
-            {demo.endpoint}
-          </code>
-        </div>
-
-        {/* Body — fixed rows so neither block shifts when switching demos */}
-        <div className='grid h-[400px] grid-rows-[235px_minmax(0,1fr)] font-mono text-[12.5px] leading-[1.55]'>
-          {/* Request */}
-          <RequestBlock demo={demo} transitioning={transitioning} />
-
-          {/* Response */}
-          <ResponseBlock demo={demo} transitioning={transitioning} />
-        </div>
-
-        {/* Footer metrics */}
+        {/* Footer */}
         <div
           className={cn(
             'flex items-center justify-between border-t px-5 py-2.5',
             'border-border/40 bg-muted/30 dark:border-white/[0.05] dark:bg-white/[0.02]'
           )}
         >
-          <div className='text-foreground/40 flex items-center gap-3 text-[10px] tabular-nums'>
-            <span className='flex items-center gap-1'>
-              <span className='font-mono'>{demo.latency}</span>
-              <span className='tracking-wider uppercase'>ms</span>
-            </span>
-            <span className='bg-foreground/15 size-1 rounded-full' />
-            <span className='flex items-center gap-1'>
-              <span className='font-mono'>{demo.tokens}</span>
-              <span className='tracking-wider uppercase'>tokens</span>
-            </span>
-            <span className='bg-foreground/15 size-1 rounded-full' />
-            <span className='flex items-center gap-1'>
-              <span className='tracking-wider uppercase'>cost</span>
-              <span className='font-mono'>
-                ${(demo.tokens * 0.00003).toFixed(5)}
-              </span>
-            </span>
-          </div>
+          <span className='text-foreground/40 font-mono text-[10px] tracking-wider'>
+            {GATEWAY_URL.replace(/^https?:\/\//, '')}
+          </span>
           <span className='text-foreground/30 font-mono text-[10px] tracking-wider uppercase'>
-            stream · sse
+            one url · every cli
           </span>
         </div>
       </div>
@@ -315,233 +283,62 @@ export function HeroTerminalDemo(props: HeroTerminalDemoProps) {
   )
 }
 
-function RequestBlock(props: { demo: ApiDemoConfig; transitioning: boolean }) {
-  const { demo, transitioning } = props
+function TerminalLine(props: {
+  kind: LineKind
+  text: string
+  showCursor: boolean
+}) {
+  const { kind, text, showCursor } = props
 
-  return (
-    <div className='relative px-5 py-4'>
-      <SectionLabel>Request</SectionLabel>
-      <div
-        className={cn(
-          'mt-2 transition-opacity duration-200',
-          transitioning ? 'opacity-0' : 'opacity-100'
-        )}
-      >
-        <CodeLine>
-          <Command>curl</Command> <Flag>-X</Flag> <Flag>POST</Flag>{' '}
-          <StringText>&quot;{demo.endpoint}&quot;</StringText>{' '}
-          <Muted>{'\\'}</Muted>
-        </CodeLine>
-        {demo.headers.map((header) => (
-          <CodeLine key={header} indent={2}>
-            <Flag>-H</Flag> <StringText>{header}</StringText>{' '}
-            <Muted>{'\\'}</Muted>
-          </CodeLine>
-        ))}
-        <CodeLine indent={2}>
-          <Flag>-d</Flag> <StringText>&apos;{'{'}</StringText>
-        </CodeLine>
-        {demo.request.map((line, i) => (
-          <CodeLine key={i} indent={4}>
-            {renderJsonLine(line)}
-          </CodeLine>
-        ))}
-        <CodeLine indent={2}>
-          <StringText>{'}'}&apos;</StringText>
-        </CodeLine>
+  if (kind === 'command') {
+    return (
+      <div className='flex'>
+        <span className='mr-2 shrink-0 select-none text-blue-500 dark:text-blue-400'>
+          $
+        </span>
+        <span className='text-foreground/90 break-all'>
+          {text}
+          {showCursor && <Caret />}
+        </span>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
-function ResponseBlock(props: { demo: ApiDemoConfig; transitioning: boolean }) {
-  const { demo, transitioning } = props
-
-  return (
-    <div
-      className={cn(
-        'relative border-t px-5 py-4',
-        'border-border/40 bg-muted/20 dark:border-white/[0.05] dark:bg-white/[0.015]'
-      )}
-    >
-      <SectionLabel>Response</SectionLabel>
-      <div
-        className={cn(
-          'mt-2 transition-opacity duration-200',
-          transitioning ? 'opacity-0' : 'opacity-100'
-        )}
-      >
-        {demo.response.map((line, i) => (
-          <CodeLine key={i}>{renderResponseLine(line, demo)}</CodeLine>
-        ))}
+  if (kind === 'success') {
+    return (
+      <div className='flex'>
+        <span className='mr-2 shrink-0 select-none text-emerald-500 dark:text-emerald-400'>
+          ✓
+        </span>
+        <span className='text-foreground/55 break-all'>{text}</span>
       </div>
+    )
+  }
+
+  // pending
+  return (
+    <div className='flex'>
+      <span className='mr-2 shrink-0 animate-pulse select-none text-amber-500 dark:text-amber-400'>
+        ⌁
+      </span>
+      <span className='text-foreground/55 break-all'>{text}</span>
     </div>
   )
 }
 
-function SectionLabel(props: { children: ReactNode }) {
+function PromptCursor() {
   return (
-    <span className='text-foreground/30 font-sans text-[10px] font-semibold tracking-[0.18em] uppercase'>
-      {props.children}
-    </span>
-  )
-}
-
-const STRING_RE = /"[^"]*"/g
-const PLACEHOLDER_RE = /<[a-z]+>/gi
-
-function renderJsonLine(line: string): ReactNode {
-  if (!line.trim()) return <Muted> </Muted>
-  return tokenize(line)
-}
-
-function renderResponseLine(line: string, demo: ApiDemoConfig): ReactNode {
-  if (!line.trim()) return <Muted> </Muted>
-
-  const segments: ReactNode[] = []
-  let cursor = 0
-  const matches = [...line.matchAll(PLACEHOLDER_RE)]
-
-  if (matches.length === 0) return tokenize(line)
-
-  matches.forEach((match, idx) => {
-    const start = match.index ?? 0
-    if (start > cursor) {
-      segments.push(
-        <span key={`pre-${idx}`}>{tokenize(line.slice(cursor, start))}</span>
-      )
-    }
-    const placeholder = match[0]
-    if (placeholder === '<text>') {
-      segments.push(
-        <Accent key={`ph-${idx}`} accent={demo.accent}>
-          {`"${truncateResponse(demo)}"`}
-        </Accent>
-      )
-    } else if (placeholder === '<tokens>') {
-      segments.push(<NumberText key={`ph-${idx}`}>{demo.tokens}</NumberText>)
-    } else if (placeholder === '<in>') {
-      segments.push(
-        <NumberText key={`ph-${idx}`}>
-          {Math.floor(demo.tokens * 0.4)}
-        </NumberText>
-      )
-    } else if (placeholder === '<out>') {
-      segments.push(
-        <NumberText key={`ph-${idx}`}>
-          {Math.ceil(demo.tokens * 0.6)}
-        </NumberText>
-      )
-    } else {
-      segments.push(<Muted key={`ph-${idx}`}>{placeholder}</Muted>)
-    }
-    cursor = start + placeholder.length
-  })
-
-  if (cursor < line.length) {
-    segments.push(<span key='tail'>{tokenize(line.slice(cursor))}</span>)
-  }
-
-  return segments
-}
-
-function truncateResponse(demo: ApiDemoConfig): string {
-  const map: Record<string, string> = {
-    'gpt-chat': 'Chat request routed.',
-    responses: 'Response workflow ready.',
-    claude: 'Claude message routed.',
-    gemini: 'Gemini request served.',
-  }
-  return map[demo.id] ?? '...'
-}
-
-function tokenize(input: string): ReactNode {
-  // Split string into "..." string runs and the rest, then color keys/punct.
-  const segments: ReactNode[] = []
-  let cursor = 0
-  const matches = [...input.matchAll(STRING_RE)]
-
-  matches.forEach((match, idx) => {
-    const start = match.index ?? 0
-    if (start > cursor) {
-      segments.push(
-        <Muted key={`m-${idx}`}>{input.slice(cursor, start)}</Muted>
-      )
-    }
-    const text = match[0]
-    const after = input.slice(start + text.length).trimStart()
-    const isKey = after.startsWith(':')
-    if (isKey) {
-      segments.push(<Key key={`k-${idx}`}>{text}</Key>)
-    } else {
-      segments.push(<StringText key={`s-${idx}`}>{text}</StringText>)
-    }
-    cursor = start + text.length
-  })
-
-  if (cursor < input.length) {
-    segments.push(<Muted key='tail'>{input.slice(cursor)}</Muted>)
-  }
-
-  return segments
-}
-
-function CodeLine(props: { children: ReactNode; indent?: number }) {
-  return (
-    <div className='break-words whitespace-pre-wrap'>
-      {props.indent ? (
-        <span
-          aria-hidden
-          className='inline-block'
-          style={{ width: `${props.indent}ch` }}
-        />
-      ) : null}
-      {props.children}
+    <div className='flex'>
+      <span className='mr-2 shrink-0 select-none text-blue-500 dark:text-blue-400'>
+        $
+      </span>
+      <Caret />
     </div>
   )
 }
 
-function Command(props: { children: ReactNode }) {
+function Caret() {
   return (
-    <span className='font-medium text-emerald-600 dark:text-emerald-400'>
-      {props.children}
-    </span>
-  )
-}
-
-function Flag(props: { children: ReactNode }) {
-  return (
-    <span className='text-blue-600 dark:text-blue-400'>{props.children}</span>
-  )
-}
-
-function Key(props: { children: ReactNode }) {
-  return (
-    <span className='text-sky-700 dark:text-sky-300'>{props.children}</span>
-  )
-}
-
-function StringText(props: { children: ReactNode }) {
-  return (
-    <span className='text-amber-700 dark:text-amber-300'>{props.children}</span>
-  )
-}
-
-function NumberText(props: { children: ReactNode }) {
-  return (
-    <span className='font-medium text-violet-600 dark:text-violet-300'>
-      {props.children}
-    </span>
-  )
-}
-
-function Muted(props: { children: ReactNode }) {
-  return <span className='text-foreground/55'>{props.children}</span>
-}
-
-function Accent(props: { children: ReactNode; accent: AccentTone }) {
-  const tone = ACCENT_CLASSES[props.accent]
-  return (
-    <span className={cn('font-medium', tone.activeText)}>{props.children}</span>
+    <span className='ml-0.5 inline-block h-[1.05em] w-[0.5ch] translate-y-[0.18em] animate-pulse rounded-[1px] bg-foreground/70 align-middle' />
   )
 }

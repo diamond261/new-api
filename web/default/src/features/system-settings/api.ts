@@ -53,6 +53,31 @@ export async function deleteLogsBefore(targetTimestamp: number) {
   return res.data
 }
 
+export async function deleteAllLogs() {
+  // Use a future-leaning timestamp so the backend (which only matches
+  // created_at < target) removes every existing row.
+  const targetTimestamp = Math.floor(Date.now() / 1000) + 60
+  return deleteLogsBefore(targetTimestamp)
+}
+
+export async function backupDatabase() {
+  const res = await api.get('/api/database/backup', { responseType: 'blob' })
+  return res
+}
+
+export async function restoreDatabase(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  const res = await api.post('/api/database/restore', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data as {
+    success: boolean
+    message?: string
+    data?: { safety_backup?: string }
+  }
+}
+
 export async function resetModelRatios() {
   const res = await api.post<UpdateOptionResponse>(
     '/api/option/rest_model_ratio'

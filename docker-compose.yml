@@ -17,6 +17,12 @@ version: '3.4' # For compatibility with older Docker versions
 services:
   new-api:
     image: calciumion/new-api:latest
+    # Build the image from local source so code changes are included.
+    # Rebuild + redeploy with: docker compose up -d --build new-api
+    # (Do NOT run `docker compose pull`, which would overwrite the local build.)
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: new-api
     restart: always
     command: --log-dir /app/logs

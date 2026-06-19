@@ -25,10 +25,12 @@ import ja from './locales/ja.json'
 import ru from './locales/ru.json'
 import vi from './locales/vi.json'
 import zh from './locales/zh.json'
+import zhTW from './locales/zh-TW.json'
 
 export const resources = {
   en,
   zh,
+  'zh-TW': zhTW,
   fr,
   ru,
   ja,
@@ -41,8 +43,10 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    supportedLngs: ['en', 'zh', 'fr', 'ru', 'ja', 'vi'],
-    load: 'languageOnly', // Convert zh-CN -> zh
+    supportedLngs: ['en', 'zh', 'zh-TW', 'fr', 'ru', 'ja', 'vi'],
+    // Keep region-less fallback (e.g. zh-CN -> zh, en-US -> en) while still
+    // allowing an explicit Traditional Chinese (zh-TW) variant to be selected.
+    nonExplicitSupportedLngs: true,
     nsSeparator: false, // Allow literal colons in keys (e.g., URLs, labels)
     debug: import.meta.env.DEV,
     interpolation: {

@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 export const INTERFACE_LANGUAGE_OPTIONS = [
   { code: 'zh', label: '简体中文' },
+  { code: 'zh-TW', label: '繁體中文' },
   { code: 'en', label: 'English' },
   { code: 'fr', label: 'Français' },
   { code: 'ru', label: 'Русский' },
@@ -33,6 +34,16 @@ export function normalizeInterfaceLanguage(value?: string | null): string {
   if (!value) return 'en'
 
   const normalized = value.trim().replace(/_/g, '-').toLowerCase()
+  // Traditional Chinese variants (Taiwan / Hong Kong / Macau / Hant script)
+  if (
+    normalized.startsWith('zh-tw') ||
+    normalized.startsWith('zh-hk') ||
+    normalized.startsWith('zh-mo') ||
+    normalized.startsWith('zh-hant')
+  ) {
+    return 'zh-TW'
+  }
+  // Any other Chinese variant defaults to Simplified Chinese
   if (normalized.startsWith('zh')) return 'zh'
 
   return INTERFACE_LANGUAGE_OPTIONS.some((lang) => lang.code === normalized)

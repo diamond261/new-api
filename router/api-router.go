@@ -314,6 +314,13 @@ func SetApiRouter(router *gin.Engine) {
 		dataRoute.GET("/users", middleware.AdminAuth(), controller.GetQuotaDatesByUser)
 		dataRoute.GET("/self", middleware.UserAuth(), controller.GetUserQuotaDates)
 
+		databaseRoute := apiRouter.Group("/database")
+		databaseRoute.Use(middleware.AdminAuth())
+		{
+			databaseRoute.GET("/backup", controller.BackupDatabase)
+			databaseRoute.POST("/restore", controller.RestoreDatabase)
+		}
+
 		logRoute.Use(middleware.CORS(), middleware.CriticalRateLimit())
 		{
 			logRoute.GET("/token", middleware.TokenAuthReadOnly(), controller.GetLogByKey)
