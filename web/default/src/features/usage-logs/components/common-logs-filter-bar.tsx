@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useQueryClient, useIsFetching } from '@tanstack/react-query'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
 import { type Table } from '@tanstack/react-table'
@@ -198,6 +198,25 @@ export function CommonLogsFilterBar<TData>(
     queryClient.invalidateQueries({ queryKey: ['logs'] })
     queryClient.invalidateQueries({ queryKey: ['usage-logs-stats'] })
   }, [filters, logType, navigate, queryClient])
+
+  const handleApplyRef = useRef(handleApply)
+  useEffect(() => { handleApplyRef.current = handleApply }, [handleApply])
+  useEffect(() => {
+    const inSync =
+      (filters.startTime?.getTime() ?? 0) === (searchParams.startTime ?? 0) &&
+      (filters.endTime?.getTime() ?? 0) === (searchParams.endTime ?? 0) &&
+      (filters.channel ?? '') === (searchParams.channel ?? '') &&
+      (filters.model ?? '') === (searchParams.model ?? '') &&
+      (filters.group ?? '') === (searchParams.group ?? '') &&
+      (filters.token ?? '') === (searchParams.token ?? '') &&
+      (filters.username ?? '') === (searchParams.username ?? '') &&
+      (filters.requestId ?? '') === (searchParams.requestId ?? '') &&
+      (filters.upstreamRequestId ?? '') === (searchParams.upstreamRequestId ?? '') &&
+      logType === getLogTypeValue(searchParams.type)
+    if (inSync) return
+    const id = setTimeout(() => handleApplyRef.current(), 600)
+    return () => clearTimeout(id)
+  }, [filters, logType, searchParams.startTime, searchParams.endTime, searchParams.channel, searchParams.model, searchParams.group, searchParams.token, searchParams.username, searchParams.requestId, searchParams.upstreamRequestId, searchParams.type])
 
   const handleReset = useCallback(() => {
     const { start, end } = getDefaultTimeRange()

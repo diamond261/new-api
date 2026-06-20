@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQueryClient, useIsFetching } from '@tanstack/react-query'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
 import { type Table } from '@tanstack/react-table'
@@ -126,6 +126,25 @@ export function TaskLogsFilterBar<TData>(props: TaskLogsFilterBarProps<TData>) {
     })
     queryClient.invalidateQueries({ queryKey: ['logs'] })
   }, [filters, navigate, props.logCategory, queryClient])
+
+  const handleApplyRef = useRef(handleApply)
+  useEffect(() => { handleApplyRef.current = handleApply }, [handleApply])
+  useEffect(() => {
+    const filterStart = filters.startTime?.getTime() ?? 0
+    const filterEnd = filters.endTime?.getTime() ?? 0
+    const urlStart = searchParams.startTime ?? 0
+    const urlEnd = searchParams.endTime ?? 0
+    const urlChannel = searchParams.channel ?? ''
+    const urlFilter = searchParams.filter ?? ''
+    const inSync =
+      filterStart === urlStart &&
+      filterEnd === urlEnd &&
+      (filters.channel ?? '') === urlChannel &&
+      getFilterValue(filters, props.logCategory) === urlFilter
+    if (inSync) return
+    const id = setTimeout(() => handleApplyRef.current(), 600)
+    return () => clearTimeout(id)
+  }, [filters, searchParams.startTime, searchParams.endTime, searchParams.channel, searchParams.filter, props.logCategory])
 
   const handleReset = useCallback(() => {
     const { start, end } = getDefaultTimeRange()

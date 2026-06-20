@@ -33,13 +33,12 @@ interface FeatureCard {
 const CARDS: FeatureCard[] = [
   {
     number: '01',
-    ascii: `┌──┐  ┌──┐  ┌──┐
-│HK│  │HK│  │HK│
-└──┘  └──┘  └──┘
-   ↘   ↓   ↙
-   ┌──────┐
-   │ flow │
-   └──────┘`,
+    ascii: `HK·1  HK·2  HK·3
+  │      │      │
+  ╰──────┼──────╯
+  ┌──────┴──────┐
+  │  Model Bay  │
+  └─────────────┘`,
     titleKey: 'Hong Kong Local',
     descriptionKey: 'Operated by a Hong Kong-based company',
   },
@@ -69,7 +68,7 @@ p99  ▰▰▰▰▱▱
   },
   {
     number: '04',
-    ascii: `CN ──────╮
+    ascii: `HK ──────╮
          │
    ╭─────┤
    │  ModelBay
@@ -92,26 +91,11 @@ export function WhyModelBay(props: WhyModelBayProps) {
         props.className
       )}
     >
-      {/* Mono divider: "// why model bay" centered with thin rules */}
-      <div className='mb-12 flex items-center justify-center gap-4 md:mb-16'>
-        <span
-          aria-hidden
-          className='border-border/60 h-px flex-1 max-w-[240px] border-t'
-        />
-        <span className='text-muted-foreground/70 font-mono text-xs tracking-wider whitespace-nowrap'>
+      {/* Mono label: "// why model bay" — left-aligned */}
+      <div className='mb-12 md:mb-16'>
+        <span className='text-muted-foreground/70 font-mono text-xs tracking-wider'>
           {t('// why model bay')}
         </span>
-        <span
-          aria-hidden
-          className='border-border/60 h-px flex-1 max-w-[240px] border-t'
-        />
-      </div>
-
-      {/* Heading */}
-      <div className='mx-auto mb-10 max-w-2xl text-center md:mb-12'>
-        <h2 className='text-[clamp(1.6rem,3.4vw,2.4rem)] leading-[1.15] font-medium tracking-tight'>
-          {t('Designed for engineers, not for slide decks.')}
-        </h2>
       </div>
 
       {/* Cards grid */}

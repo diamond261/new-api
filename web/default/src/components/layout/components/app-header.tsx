@@ -114,17 +114,19 @@ export function AppHeader({
       <Header>
         <SystemBrand variant='inline' />
 
+        {/* Nav links immediately right of the brand, always visible */}
+        {showTopNav && !leftContent && (
+          <div className='ms-2 flex items-center'>
+            <TopNav links={links} />
+          </div>
+        )}
+
         {leftContent ? (
           <div className='ms-2 flex items-center'>{leftContent}</div>
         ) : null}
 
         {rightContent ?? (
           <div className='ms-auto flex items-center gap-1 sm:gap-2'>
-            {showTopNav && (
-              <div className='me-1 block'>
-                <TopNav links={links} />
-              </div>
-            )}
             {showSearch && <Search />}
             {showNotifications && (
               <NotificationPopover
