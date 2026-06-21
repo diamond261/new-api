@@ -18,7 +18,6 @@ For commercial licensing, please contact support@quantumnous.com
 */
 const DISPLAY_DECIMALS = 12
 const SNAP_DECIMALS = 8
-const SNAP_EPSILON = 1e-12
 
 function toNumberOrNull(value: unknown): number | null {
   if (
@@ -34,17 +33,11 @@ function toNumberOrNull(value: unknown): number | null {
   return Number.isFinite(num) ? num : null
 }
 
-function roundToDecimals(value: number, decimals: number): number {
-  const factor = 10 ** decimals
-  return Math.round(value * factor) / factor
-}
-
 function snapFloatDrift(value: number): number {
-  const tolerance = Math.max(SNAP_EPSILON, Math.abs(value) * Number.EPSILON * 8)
-
-  for (let decimals = 0; decimals <= SNAP_DECIMALS; decimals += 1) {
-    const rounded = roundToDecimals(value, decimals)
-    if (Math.abs(value - rounded) <= tolerance) {
+  for (let d = 0; d <= SNAP_DECIMALS; d += 1) {
+    const factor = 10 ** d
+    const rounded = Math.round(value * factor) / factor
+    if (Math.abs(value - rounded) < 0.5 / 10 ** (d + 6)) {
       return rounded
     }
   }

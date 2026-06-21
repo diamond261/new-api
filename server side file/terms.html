@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Terms of Service / 使用條款 - Model Bay</title>
+  <link rel="icon" href="/brand/logo.png" type="image/png" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: oklch(0.129 0.0306 264.71);
+      --card: oklch(0.16 0.025 264);
+      --card-border: oklch(0.25 0.02 264);
+      --foreground: oklch(0.929 0.0095 255.53);
+      --muted: oklch(0.65 0.015 264);
+      --primary: oklch(0.6147 0.0867 154.73);
+      --primary-light: oklch(0.7 0.08 155);
+      --heading: oklch(0.85 0.015 264);
+      --radius: 0.75rem;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      background: var(--bg);
+      font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang HK', 'Noto Sans TC', sans-serif;
+      color: var(--foreground);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 860px; margin: 0 auto; padding: 48px 20px 64px }
+    .back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 13px; font-weight: 500;
+      text-decoration: none; margin-bottom: 24px; transition: color 0.15s;
+    }
+    .back:hover { color: var(--primary-light) }
+    .back svg { width: 16px; height: 16px }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: calc(var(--radius) * 2);
+      padding: 36px 32px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px }
+    .brand img { height: 32px; width: 32px; border-radius: 8px }
+    .brand h1 { font-size: 26px; font-weight: 700; color: var(--foreground); letter-spacing: -0.02em }
+    .meta { color: var(--muted); font-size: 13px; margin-bottom: 28px }
+    .summary { color: var(--muted); font-size: 15px; margin-bottom: 32px; border-left: 3px solid var(--primary); padding-left: 16px }
+    h2 { font-size: 17px; font-weight: 600; color: var(--heading); margin: 28px 0 10px; letter-spacing: -0.01em }
+    p { margin-bottom: 14px; font-size: 15px }
+    ul { padding-left: 20px; margin-bottom: 14px }
+    li { margin-bottom: 6px; font-size: 15px }
+    li strong { color: var(--heading) }
+    a { color: var(--primary-light); text-decoration: none; transition: color 0.15s }
+    a:hover { color: var(--primary); text-decoration: underline }
+    .divider { border: none; border-top: 1px solid var(--card-border); margin: 32px 0 16px }
+    .foot { color: var(--muted); font-size: 13px }
+    @media (max-width: 640px) {
+      .card { padding: 24px 18px }
+      .brand h1 { font-size: 22px }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Back to dashboard
+    </a>
+    <div class="card">
+      <div class="brand">
+        <img src="/brand/logo.png" alt="Model Bay" />
+        <h1>Terms of Service</h1>
+      </div>
+      <div class="meta">Last updated: 2026-04-10 (HKT) &nbsp;|&nbsp; 最後更新：2026-04-10（香港時間）</div>
+
+      <div class="summary">
+        These terms apply to all use of the Model Bay API platform. By accessing, integrating, or using the platform, you acknowledge that you have read, understood, and agree to be bound by these terms.
+      </div>
+
+      <h2>1. Service Scope / 服務範圍</h2>
+      <p>The platform provides model aggregation, request routing, unified access, and related management capabilities. We may adjust available models, features, quotas, and technical specifications from time to time for operational, security, and compliance reasons.</p>
+      <p><em>本平台提供模型聚合、請求路由、統一接入及相關管理能力。基於營運、安全及合規需要，我們可不時調整可用模型、功能、配額與技術規格。</em></p>
+
+      <h2>2. Account &amp; API Key Responsibility / 帳戶與 API Key 責任</h2>
+      <ul>
+        <li><strong>Custody</strong> — You are responsible for safeguarding your account credentials and API keys, and for all activity under them.<br/><em>你須對帳戶與 API Key 之保管、使用及所有行為負責。</em></li>
+        <li><strong>No transfers</strong> — You may not transfer, lease, sell, or provide credentials to unauthorized persons.<br/><em>你不得將憑證轉讓、出租、出售或提供予未授權人士使用。</em></li>
+        <li><strong>Breach response</strong> — If you suspect a credential leak, deactivate and rotate it immediately, and notify the platform promptly.<br/><em>如懷疑憑證外洩，須立即停用及更換，並盡快通知平台。</em></li>
+      </ul>
+
+      <h2>3. Acceptable Use / 可接受使用</h2>
+      <ul>
+        <li>Do not use the service for illegal, infringing, fraudulent, or abusive purposes, or to circumvent platform restrictions.<br/><em>不得將服務用於違法、侵權、詐騙、攻擊、濫發或繞過平台限制之用途。</em></li>
+        <li>Do not interfere with platform stability, security, or other users' normal use through technical means.<br/><em>不得以技術手段干擾平台穩定性、安全性或其他用戶正常使用。</em></li>
+      </ul>
+
+      <h2>4. Billing, Quotas &amp; Controls / 收費、配額與管控措施</h2>
+      <p>The platform may charge by plan or usage and may implement rate limiting, quota control, risk review, and anomaly handling. We may suspend or terminate service upon detecting violations, unpaid balances, or security risks.</p>
+      <p><em>平台可按套餐或用量計費，並可依政策實施限流、配額控制、風險審核及異常處置。於偵測違規、欠費或安全風險時，我們可採取暫停或終止措施。</em></p>
+
+      <h2>5. Disclaimers &amp; Liability Limits / 免責與責任限制</h2>
+      <p>To the extent permitted by applicable law, the service is provided "as is." We are not liable for indirect, consequential, or profit losses, or business interruption. You are responsible for evaluating the risks and compliance implications of integrating the platform into your business workflows.</p>
+      <p><em>在適用法律許可範圍內，服務按「現況」提供。對間接損失、後果性損失、利潤損失或業務中斷，我們不承擔責任。</em></p>
+
+      <h2>6. Amendments &amp; Jurisdiction / 修訂與管轄</h2>
+      <p>We may amend these terms from time to time. Updated versions take effect upon publication on this page. Unless otherwise mandated by law, these terms are governed by and construed under Hong Kong law.</p>
+      <p><em>我們可不時修訂本條款，更新版本於本頁發布後生效。除法律另有強制規定外，本條款受香港法律管轄。</em></p>
+
+      <h2>7. Related Policies / 相關政策</h2>
+      <p>For data handling arrangements, see <a href="/privacy">Privacy &amp; Data / 私隱與數據</a>.</p>
+
+      <hr class="divider" />
+      <div class="foot">Model Bay &middot; API Platform</div>
+    </div>
+  </div>
+</body>
+</html>
