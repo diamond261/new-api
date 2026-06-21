@@ -12,68 +12,48 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/model"
 )
 
-// BackupDatabase streams the underlying database for download.
-// Currently only SQLite is supported (a copy of the .db file is sent).
-// For MySQL / PostgreSQL the operator should use the native dump tools
-// (`mysqldump`, `pg_dump`) — automated backup is not implemented for those
-// drivers because the binaries are not guaranteed to be present in the
-// runtime container.
+// BackupDatabase streams a database backup for download.
+// SQLite: sends the raw .db file.
+// PostgreSQL / MySQL: sends a logical JSON dump (gzipped).
 func BackupDatabase(c *gin.Context) {
-	if !common.UsingSQLite {
-		driver := "MySQL"
-		if common.UsingPostgreSQL {
-			driver = "PostgreSQL"
-		}
-		c.JSON(http.StatusNotImplemented, gin.H{
-			"success": false,
-			"message": fmt.Sprintf(
-				"Automated database backup is only supported for SQLite. Please use native dump tools (mysqldump / pg_dump) for %s.",
-				driver,
-			),
-		})
-		return
-	}
-
-	// Strip any SQLite DSN parameters (?_busy_timeout=...) to get the
-	// real filesystem path of the database file.
-	dbFilePath := common.SQLitePath
-	if idx := strings.Index(dbFilePath, "?"); idx >= 0 {
-		dbFilePath = dbFilePath[:idx]
-	}
-
-	absPath, err := filepath.Abs(dbFilePath)
-	if err != nil {
-		common.ApiError(c, err)
-		return
-	}
-
-	info, err := os.Stat(absPath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": fmt.Sprintf("Database file not found: %s", err.Error()),
-		})
-		return
-	}
-
 	timestamp := time.Now().UTC().Format("20060102-150405")
-	filename := fmt.Sprintf("new-api-backup-%s.db", timestamp)
 
-	c.Writer.Header().Set("Content-Description", "Database Backup")
-	c.Writer.Header().Set("Content-Type", "application/octet-stream")
-	c.Writer.Header().Set(
-		"Content-Disposition",
-		fmt.Sprintf("attachment; filename=\"%s\"", filename),
-	)
-	c.Writer.Header().Set("Content-Transfer-Encoding", "binary")
-	c.Writer.Header().Set("Expires", "0")
-	c.Writer.Header().Set("Cache-Control", "must-revalidate")
-	c.Writer.Header().Set("Pragma", "public")
-	c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
+	if common.UsingSQLite {
+		dbFilePath := sqliteFilePath()
+		absPath, err := filepath.Abs(dbFilePath)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		info, err := os.Stat(absPath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": fmt.Sprintf("Database file not found: %s", err.Error())})
+			return
+		}
+		filename := fmt.Sprintf("new-api-backup-%s.db", timestamp)
+		c.Writer.Header().Set("Content-Description", "Database Backup")
+		c.Writer.Header().Set("Content-Type", "application/octet-stream")
+		c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+		c.Writer.Header().Set("Content-Transfer-Encoding", "binary")
+		c.Writer.Header().Set("Expires", "0")
+		c.Writer.Header().Set("Cache-Control", "must-revalidate")
+		c.Writer.Header().Set("Pragma", "public")
+		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
+		c.File(absPath)
+		return
+	}
 
-	c.File(absPath)
+	filename := fmt.Sprintf("new-api-backup-%s.json.gz", timestamp)
+	c.Writer.Header().Set("Content-Type", "application/gzip")
+	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.Writer.Header().Set("Cache-Control", "no-store")
+
+	if err := model.PerformLogicalBackup(c.Writer); err != nil {
+		common.SysError("database backup failed: " + err.Error())
+	}
 }
 
 // sqliteFilePath returns the on-disk path of the SQLite database without DSN
@@ -125,20 +105,13 @@ func RestoreDatabase(c *gin.Context) {
 	}
 	defer uploaded.Close()
 
-	// Validate SQLite magic header.
 	header := make([]byte, 16)
 	if _, err := io.ReadFull(uploaded, header); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Uploaded file is too small to be a SQLite database.",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Uploaded file is too small to be a SQLite database."})
 		return
 	}
 	if string(header) != "SQLite format 3\x00" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Uploaded file is not a valid SQLite database (bad magic header).",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Uploaded file is not a valid SQLite database (bad magic header)."})
 		return
 	}
 	if _, err := uploaded.Seek(0, io.SeekStart); err != nil {
@@ -153,8 +126,6 @@ func RestoreDatabase(c *gin.Context) {
 		return
 	}
 
-	// Write the upload to a temp file in the same directory so the final
-	// rename is atomic (same filesystem).
 	dir := filepath.Dir(absPath)
 	tmpFile, err := os.CreateTemp(dir, ".db-restore-*.tmp")
 	if err != nil {
@@ -180,7 +151,6 @@ func RestoreDatabase(c *gin.Context) {
 		return
 	}
 
-	// Copy the current DB to a timestamped safety backup.
 	timestamp := time.Now().UTC().Format("20060102-150405")
 	safetyPath := fmt.Sprintf("%s.bak-%s", absPath, timestamp)
 	if _, statErr := os.Stat(absPath); statErr == nil {
@@ -191,7 +161,6 @@ func RestoreDatabase(c *gin.Context) {
 		}
 	}
 
-	// Atomic replace.
 	if err := os.Rename(tmpPath, absPath); err != nil {
 		_ = os.Remove(tmpPath)
 		common.ApiError(c, err)
@@ -201,14 +170,9 @@ func RestoreDatabase(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Database restored. The server will restart momentarily.",
-		"data": gin.H{
-			"safety_backup": filepath.Base(safetyPath),
-		},
+		"data":    gin.H{"safety_backup": filepath.Base(safetyPath)},
 	})
 
-	// Force the process to exit after the response has flushed so the
-	// container's restart policy reloads the DB cleanly. 1.5s delay gives
-	// the HTTP write time to complete.
 	go func() {
 		time.Sleep(1500 * time.Millisecond)
 		os.Exit(0)
