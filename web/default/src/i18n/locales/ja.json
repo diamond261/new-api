@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "// Model Bay ~ AI for engineers": "// Model Bay ~ AI for engineers",
     "// Ready to Go?": "// Ready to Go?",
     "Ready to set sail with Model Bay?": "Model Bay と一緒に出航しませんか?",
@@ -35,9 +38,6 @@
     "Fix the concurrency issue in the login flow": "ログインフローの並行処理の問題を修正して",
     "Explain the execution plan of this SQL": "この SQL の実行計画を説明して",
     "One URL to take your dream from zero to a hundred, right here and now.": "ひとつのURLで、あなたの夢をゼロから百へ。いま、この瞬間に。",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_copy",
     "，": "、",
     ", and": "、および",
@@ -1931,7 +1931,7 @@
     "footer.columns.related.links.oneApi": "1つのAPI",
     "footer.columns.related.title": "関連プロジェクト",
     "footer.defaultCopyright": "すべての権利を留保します。",
-    "footer.new\u0061pi.projectAttributionSuffix": "すべての権利を留保します。プロジェクトコントリビューターにより設計・開発されています。",
+    "footer.newapi.projectAttributionSuffix": "すべての権利を留保します。プロジェクトコントリビューターにより設計・開発されています。",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "2025 年 5 月 10 日以降に追加されたチャネルの場合、デプロイ時にモデル名から「.」を削除する必要はありません",
     "For private deployments, format: https://fastgpt.run/api/openapi": "プライベートデプロイメントの場合、形式: https://fastgpt.run/api/openapi",
     "Force a syntactically valid JSON response": "構文的に有効な JSON 応答を強制",
@@ -4839,6 +4839,13 @@
     "Zero retention": "データ保持なし",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V 4",
-    "Zoom": "ズーム"
+    "Zoom": "ズーム",
+    "Data Safety": "データセーフティ",
+    "Telegram backup notification": "Telegram バックアップ通知",
+    "Send the backup file to a Telegram chat after each automatic backup.": "自動バックアップのたびに Telegram へバックアップファイルを送信します。",
+    "Telegram bot token": "Telegram ボットトークン",
+    "Backup upload time": "バックアップ送信時刻",
+    "Hour of day (0–23) to send the backup (UTC)": "バックアップ送信時間（0～23、UTC）",
+    "Save data safety settings": "データセーフティ設定を保存"
   }
 }

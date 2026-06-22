@@ -123,6 +123,10 @@ func InitOptionMap() {
 	common.OptionMap["GitHubClientSecret"] = ""
 	common.OptionMap["TelegramBotToken"] = ""
 	common.OptionMap["TelegramBotName"] = ""
+	common.OptionMap["AutoBackupTelegramEnabled"] = strconv.FormatBool(common.AutoBackupTelegramEnabled)
+	common.OptionMap["AutoBackupTelegramBotToken"] = ""
+	common.OptionMap["AutoBackupTelegramChatID"] = ""
+	common.OptionMap["AutoBackupHour"] = strconv.Itoa(common.AutoBackupHour)
 	common.OptionMap["WeChatServerAddress"] = ""
 	common.OptionMap["WeChatServerToken"] = ""
 	common.OptionMap["WeChatAccountQRCodeImageURL"] = ""
@@ -490,6 +494,16 @@ func updateOptionMap(key string, value string) (err error) {
 		common.TelegramBotToken = value
 	case "TelegramBotName":
 		common.TelegramBotName = value
+	case "AutoBackupTelegramEnabled":
+		common.AutoBackupTelegramEnabled = value == "true"
+	case "AutoBackupTelegramBotToken":
+		common.AutoBackupTelegramBotToken = value
+	case "AutoBackupTelegramChatID":
+		common.AutoBackupTelegramChatID = value
+	case "AutoBackupHour":
+		if h, err := strconv.Atoi(value); err == nil && h >= 0 && h <= 23 {
+			common.AutoBackupHour = h
+		}
 	case "TurnstileSiteKey":
 		common.TurnstileSiteKey = value
 	case "TurnstileSecretKey":

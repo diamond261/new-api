@@ -4757,6 +4757,13 @@
     "Zero retention": "零資料保留",
     "Zhipu": "智譜",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Data Safety": "數據安全",
+    "Telegram backup notification": "Telegram 備份通知",
+    "Send the backup file to a Telegram chat after each automatic backup.": "每次自動備份後將備份檔案發送至 Telegram。",
+    "Telegram bot token": "Telegram 機器人 Token",
+    "Backup upload time": "備份上傳時間",
+    "Hour of day (0–23) to send the backup (UTC)": "發送備份的時間（0–23，UTC）",
+    "Save data safety settings": "儲存數據安全設定"
   }
 }

@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "// Model Bay ~ AI for engineers": "// Model Bay ~ AI for engineers",
     "// Ready to Go?": "// Ready to Go?",
     "Ready to set sail with Model Bay?": "Ready to set sail with Model Bay?",
@@ -35,9 +38,6 @@
     "Fix the concurrency issue in the login flow": "Fix the concurrency issue in the login flow",
     "Explain the execution plan of this SQL": "Explain the execution plan of this SQL",
     "One URL to take your dream from zero to a hundred, right here and now.": "One URL to take your dream from zero to a hundred, right here and now.",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_copy",
     "，": ", ",
     ", and": ", and",
@@ -1931,7 +1931,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Related Projects",
     "footer.defaultCopyright": "All rights reserved.",
-    "footer.new\u0061pi.projectAttributionSuffix": "All rights reserved. Designed and developed by the project contributors.",
+    "footer.newapi.projectAttributionSuffix": "All rights reserved. Designed and developed by the project contributors.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment",
     "For private deployments, format: https://fastgpt.run/api/openapi": "For private deployments, format: https://fastgpt.run/api/openapi",
     "Force a syntactically valid JSON response": "Force a syntactically valid JSON response",
@@ -4839,6 +4839,13 @@
     "Zero retention": "Zero retention",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Data Safety": "Data Safety",
+    "Telegram backup notification": "Telegram backup notification",
+    "Send the backup file to a Telegram chat after each automatic backup.": "Send the backup file to a Telegram chat after each automatic backup.",
+    "Telegram bot token": "Telegram bot token",
+    "Backup upload time": "Backup upload time",
+    "Hour of day (0–23) to send the backup (UTC)": "Hour of day (0–23) to send the backup (UTC)",
+    "Save data safety settings": "Save data safety settings"
   }
 }

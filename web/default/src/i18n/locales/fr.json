@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "// Model Bay ~ AI for engineers": "// Model Bay ~ AI for engineers",
     "// Ready to Go?": "// Ready to Go?",
     "Ready to set sail with Model Bay?": "Prêt à embarquer avec Model Bay ?",
@@ -35,9 +38,6 @@
     "Fix the concurrency issue in the login flow": "Corrige le problème de concurrence dans le flux de connexion",
     "Explain the execution plan of this SQL": "Explique le plan d'exécution de ce SQL",
     "One URL to take your dream from zero to a hundred, right here and now.": "Une seule URL pour faire passer votre rêve de zéro à cent, ici et maintenant.",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_copie",
     "，": ", ",
     ", and": ", et",
@@ -1931,7 +1931,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Projets liés",
     "footer.defaultCopyright": "Tous droits réservés.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
+    "footer.newapi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Pour les canaux ajoutés après le 10 mai 2025, pas besoin de supprimer \".\" des noms de modèles lors du déploiement",
     "For private deployments, format: https://fastgpt.run/api/openapi": "Pour les déploiements privés, format : https://fastgpt.run/api/openapi",
     "Force a syntactically valid JSON response": "Imposer une réponse JSON syntaxiquement valide",
@@ -4839,6 +4839,13 @@
     "Zero retention": "Aucune rétention",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Data Safety": "Sécurité des données",
+    "Telegram backup notification": "Notification de sauvegarde Telegram",
+    "Send the backup file to a Telegram chat after each automatic backup.": "Envoie le fichier de sauvegarde dans un chat Telegram après chaque sauvegarde automatique.",
+    "Telegram bot token": "Jeton du bot Telegram",
+    "Backup upload time": "Heure d'envoi de la sauvegarde",
+    "Hour of day (0–23) to send the backup (UTC)": "Heure d'envoi (0–23, UTC)",
+    "Save data safety settings": "Enregistrer les paramètres de sécurité"
   }
 }

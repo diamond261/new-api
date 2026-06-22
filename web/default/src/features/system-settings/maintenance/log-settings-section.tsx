@@ -460,7 +460,7 @@ export function LogSettingsSection({
               <input
                 ref={restoreInputRef}
                 type='file'
-                accept='.db,application/octet-stream'
+                accept='.db,.gz,.json.gz,application/octet-stream,application/gzip'
                 className='hidden'
                 onChange={(event) => {
                   const file = event.target.files?.[0] ?? null

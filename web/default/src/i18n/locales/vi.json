@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "// Model Bay ~ AI for engineers": "// Model Bay ~ AI for engineers",
     "// Ready to Go?": "// Ready to Go?",
     "Ready to set sail with Model Bay?": "Sẵn sàng dong buồm cùng Model Bay?",
@@ -35,9 +38,6 @@
     "Fix the concurrency issue in the login flow": "Sửa lỗi tương tranh trong luồng đăng nhập",
     "Explain the execution plan of this SQL": "Giải thích kế hoạch thực thi của câu SQL này",
     "One URL to take your dream from zero to a hundred, right here and now.": "Một URL để đưa giấc mơ của bạn từ 0 đến 100, ngay tại đây và lúc này.",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_bản sao",
     "，": ", ",
     ", and": ", và",
@@ -1931,7 +1931,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Các Dự Án Liên Quan",
     "footer.defaultCopyright": "Bản quyền được bảo lưu.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
+    "footer.newapi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Đối với các kênh được thêm sau ngày 10 tháng 5 năm 2025, không cần loại bỏ \".\" khỏi tên mô hình trong quá trình triển khai",
     "For private deployments, format: https://fastgpt.run/api/openapi": "Đối với các triển khai riêng tư, định dạng: https://fastgpt.run/api/openapi",
     "Force a syntactically valid JSON response": "Buộc phản hồi JSON hợp lệ về cú pháp",
@@ -4839,6 +4839,13 @@
     "Zero retention": "Không lưu dữ liệu",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Data Safety": "An toàn dữ liệu",
+    "Telegram backup notification": "Thông báo sao lưu Telegram",
+    "Send the backup file to a Telegram chat after each automatic backup.": "Gửi tệp sao lưu tới Telegram sau mỗi lần sao lưu tự động.",
+    "Telegram bot token": "Token bot Telegram",
+    "Backup upload time": "Thời gian tải lên bản sao lưu",
+    "Hour of day (0–23) to send the backup (UTC)": "Giờ gửi bản sao lưu (0–23, UTC)",
+    "Save data safety settings": "Lưu cài đặt an toàn dữ liệu"
   }
 }

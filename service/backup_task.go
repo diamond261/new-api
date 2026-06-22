@@ -1,9 +1,12 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -31,18 +34,21 @@ func StartDatabaseAutoBackupTask() {
 			return
 		}
 		gopool.Go(func() {
-			logger.LogInfo(context.Background(), "database auto-backup task started: runs daily at midnight local time")
+			logger.LogInfo(context.Background(), fmt.Sprintf("database auto-backup task started: runs daily at %02d:00 UTC", common.AutoBackupHour))
 			for {
-				time.Sleep(durationUntilMidnight())
+				time.Sleep(durationUntilHour(common.AutoBackupHour))
 				runAutoBackup()
 			}
 		})
 	})
 }
 
-func durationUntilMidnight() time.Duration {
-	now := time.Now()
-	next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+func durationUntilHour(hour int) time.Duration {
+	now := time.Now().UTC()
+	next := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, time.UTC)
+	if !next.After(now) {
+		next = next.Add(24 * time.Hour)
+	}
 	return time.Until(next)
 }
 
@@ -66,6 +72,7 @@ func runAutoBackup() {
 			return
 		}
 		logger.LogInfo(ctx, fmt.Sprintf("auto-backup saved: %s", path))
+		notifyBackup(ctx, path)
 	} else {
 		path := filepath.Join(autoBackupDir, fmt.Sprintf("new-api-backup-%s.json.gz", timestamp))
 		f, err := os.Create(path)
@@ -81,6 +88,7 @@ func runAutoBackup() {
 			return
 		}
 		logger.LogInfo(ctx, fmt.Sprintf("auto-backup saved: %s", path))
+		notifyBackup(ctx, path)
 	}
 
 	pruneOldBackups(ctx)
@@ -99,6 +107,47 @@ func copyFileToPath(src, dst string) error {
 	defer out.Close()
 	_, err = io.Copy(out, in)
 	return err
+}
+
+func notifyBackup(ctx context.Context, path string) {
+	if common.AutoBackupTelegramEnabled && common.AutoBackupTelegramBotToken != "" {
+		if err := sendTelegramDocument(common.AutoBackupTelegramBotToken, path); err != nil {
+			logger.LogWarn(ctx, fmt.Sprintf("auto-backup: telegram notify failed: %v", err))
+		}
+	}
+}
+
+func sendTelegramDocument(token, filePath string) error {
+	chatID := common.AutoBackupTelegramChatID
+	if chatID == "" {
+		return fmt.Errorf("AutoBackupTelegramChatID not configured")
+	}
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	_ = mw.WriteField("chat_id", chatID)
+	_ = mw.WriteField("caption", fmt.Sprintf("new-api auto-backup %s", time.Now().UTC().Format("2006-01-02 15:04 UTC")))
+	fw, err := mw.CreateFormFile("document", filepath.Base(filePath))
+	if err != nil {
+		return err
+	}
+	if _, err = io.Copy(fw, f); err != nil {
+		return err
+	}
+	mw.Close()
+
+	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendDocument", token)
+	resp, err := http.Post(url, mw.FormDataContentType(), &buf) //nolint:noctx
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
 }
 
 func pruneOldBackups(ctx context.Context) {

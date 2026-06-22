@@ -66,35 +66,14 @@ func sqliteFilePath() string {
 	return dbFilePath
 }
 
-// RestoreDatabase accepts a multipart `file` upload, validates that it's a
-// SQLite database (magic header `SQLite format 3\000`), writes it to a temp
-// path, copies the current DB to a `.bak-<timestamp>` safety copy, atomically
-// renames the temp file over the live DB, and forces the process to exit so
-// the container restart applies the restored database.
-//
-// SQLite only. Returns 501 for MySQL/PostgreSQL.
+// RestoreDatabase accepts a multipart `file` upload and restores the database.
+// It auto-detects the file type by magic bytes:
+//   - gzip magic (\x1f\x8b): logical JSON.gz restore (PostgreSQL, MySQL, SQLite)
+//   - SQLite magic: file-swap restore (SQLite only)
 func RestoreDatabase(c *gin.Context) {
-	if !common.UsingSQLite {
-		driver := "MySQL"
-		if common.UsingPostgreSQL {
-			driver = "PostgreSQL"
-		}
-		c.JSON(http.StatusNotImplemented, gin.H{
-			"success": false,
-			"message": fmt.Sprintf(
-				"Automated database restore is only supported for SQLite. Please restore manually for %s.",
-				driver,
-			),
-		})
-		return
-	}
-
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "No backup file uploaded (expected multipart field `file`).",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "No backup file uploaded (expected multipart field `file`)."})
 		return
 	}
 
@@ -105,17 +84,37 @@ func RestoreDatabase(c *gin.Context) {
 	}
 	defer uploaded.Close()
 
-	header := make([]byte, 16)
-	if _, err := io.ReadFull(uploaded, header); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Uploaded file is too small to be a SQLite database."})
-		return
-	}
-	if string(header) != "SQLite format 3\x00" {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Uploaded file is not a valid SQLite database (bad magic header)."})
+	magic := make([]byte, 16)
+	if _, err := io.ReadFull(uploaded, magic); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Uploaded file is too small."})
 		return
 	}
 	if _, err := uploaded.Seek(0, io.SeekStart); err != nil {
 		common.ApiError(c, err)
+		return
+	}
+
+	// Gzip magic bytes → logical JSON restore
+	if magic[0] == 0x1f && magic[1] == 0x8b {
+		if err := model.RestoreLogicalBackup(uploaded); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Restore failed: " + err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Database restored. The server will restart momentarily."})
+		go func() {
+			time.Sleep(1500 * time.Millisecond)
+			os.Exit(0)
+		}()
+		return
+	}
+
+	// SQLite magic → file-swap restore (SQLite only)
+	if string(magic) != "SQLite format 3\x00" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Unrecognized backup file format. Expected a .json.gz or .db backup."})
+		return
+	}
+	if !common.UsingSQLite {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Cannot restore a SQLite backup to a PostgreSQL/MySQL database. Use a .json.gz backup instead."})
 		return
 	}
 
@@ -125,7 +124,6 @@ func RestoreDatabase(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-
 	dir := filepath.Dir(absPath)
 	tmpFile, err := os.CreateTemp(dir, ".db-restore-*.tmp")
 	if err != nil {
@@ -160,7 +158,6 @@ func RestoreDatabase(c *gin.Context) {
 			return
 		}
 	}
-
 	if err := os.Rename(tmpPath, absPath); err != nil {
 		_ = os.Remove(tmpPath)
 		common.ApiError(c, err)
@@ -172,7 +169,6 @@ func RestoreDatabase(c *gin.Context) {
 		"message": "Database restored. The server will restart momentarily.",
 		"data":    gin.H{"safety_backup": filepath.Base(safetyPath)},
 	})
-
 	go func() {
 		time.Sleep(1500 * time.Millisecond)
 		os.Exit(0)

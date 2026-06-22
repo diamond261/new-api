@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "// Model Bay ~ AI for engineers": "// Model Bay ~ AI for engineers",
     "// Ready to Go?": "// Ready to Go?",
     "Ready to set sail with Model Bay?": "准备好和Model Bay,共同启航吗?",
@@ -35,9 +38,6 @@
     "Fix the concurrency issue in the login flow": "修复登录流程中的并发问题",
     "Explain the execution plan of this SQL": "解释这段 SQL 的执行计划",
     "One URL to take your dream from zero to a hundred, right here and now.": "一个URL,让你的梦想从零到一百在此刻实现",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_复制",
     "，": "，",
     ", and": "，和",
@@ -1931,7 +1931,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "相关项目",
     "footer.defaultCopyright": "版权所有。",
-    "footer.new\u0061pi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
+    "footer.newapi.projectAttributionSuffix": "版权所有，由项目贡献者设计与开发。",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "对于 2025 年 5 月 10 日之后添加的渠道，在部署时无需从模型名称中移除 \".\"",
     "For private deployments, format: https://fastgpt.run/api/openapi": "对于私有部署，格式为：https://fastgpt.run/api/openapi",
     "Force a syntactically valid JSON response": "强制返回语法合法的 JSON",
@@ -4839,6 +4839,13 @@
     "Zero retention": "零数据保留",
     "Zhipu": "智谱",
     "Zhipu V4": "智谱 V4",
-    "Zoom": "缩放"
+    "Zoom": "缩放",
+    "Data Safety": "数据安全",
+    "Telegram backup notification": "Telegram 备份通知",
+    "Send the backup file to a Telegram chat after each automatic backup.": "每次自动备份后将备份文件发送至 Telegram。",
+    "Telegram bot token": "Telegram 机器人 Token",
+    "Backup upload time": "备份上传时间",
+    "Hour of day (0–23) to send the backup (UTC)": "发送备份的时间（0–23，UTC）",
+    "Save data safety settings": "保存数据安全设置"
   }
 }
